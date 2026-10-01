@@ -72,7 +72,7 @@ Day 29 → 01, month 09 → 10. Keep the dot at the end.
 
 The bottom date:
 "29.09.26" → "30.09.26"
-Only the day changes (29 → 30). Keep the two-digit year, no dot at the end.
+Only the day changes (29 → 30). No dot at the end.
 
 Each date keeps exactly the same number of characters. Replace the digits in place: every character, including the dots, stays in exactly the same spot.
 
@@ -83,7 +83,6 @@ Keep identical: the size, shape, color, paper texture and grain of every part an
 Never change the "Datum" line or the "geb. am" line.
 
 Final check – the result must read exactly:
-Very top right corner is always "10.01.2010"
 Top date: "28.09.2026"
 Middle date: "01.10.2026."
 Bottom date: "30.09.26"</div>
@@ -104,7 +103,7 @@ Bottom date: "30.09.26"</div>
   /* Datum oben = Label A. B liegt (Zahl minus 1) Tage nach A. C liegt 2 Tage nach A,
      ausser bei Zahl 2 (1 Tag) und Zahl 1 (gleicher Tag). Davids Regel, 01.10.2026.
      Die alten Werte sind das, was im Bild steht, und bleiben fest. */
-  const ALT = { A: '29.09.2026', B: '28.09.2026.', C: '30.09.26' };
+  const ALT = { A: '29.09.2026', B: '28.09.2026.', C: '30.09.2026' };
   const z2 = (n) => String(n).padStart(2, '0');
   function plus(d, tage) { const x = new Date(d); x.setDate(x.getDate() + tage); return x; }
   const TAGE = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
@@ -122,7 +121,7 @@ Bottom date: "30.09.26"</div>
   }
   function liste(xs) { const q = xs.map((x) => `"${x}"`); return q.length < 2 ? q[0] : q.slice(0, -1).join(', ') + ' and ' + q[q.length - 1]; }
   function text(a, zahl) {
-    const NEU = { A: lang(a), B: lang(plus(a, zahl - 1)) + '.', C: kurz(plus(a, Math.min(2, zahl - 1))) };
+    const NEU = { A: lang(a), B: lang(plus(a, zahl - 1)) + '.', C: lang(plus(a, Math.min(2, zahl - 1))) };
     const alt = new Set(Object.values(ALT).join('').replace(/\D/g, ''));
     const neuZ = [...new Set(Object.values(NEU).join('').replace(/\D/g, ''))].filter((c) => !alt.has(c)).sort();
     const ziffern = !neuZ.length ? '' : neuZ.length === 1
@@ -142,7 +141,7 @@ ${aenderung(ALT.B, NEU.B)} Keep the dot at the end.
 
 The bottom date:
 "${ALT.C}" → "${NEU.C}"
-${aenderung(ALT.C, NEU.C)} Keep the two-digit year, no dot at the end.
+${aenderung(ALT.C, NEU.C)} No dot at the end.
 
 Each date keeps exactly the same number of characters. Replace the digits in place: every character, including the dots, stays in exactly the same spot.
 
@@ -153,7 +152,6 @@ Keep identical: the size, shape, color, paper texture and grain of every part an
 Never change the "Datum" line or the "geb. am" line.
 
 Final check – the result must read exactly:
-Very top right corner is always "10.01.2010"
 Top date: "${NEU.A}"
 Middle date: "${NEU.B}"
 Bottom date: "${NEU.C}"` };
