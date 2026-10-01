@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Catch Me If You Can</title>
+<meta name="apple-mobile-web-app-title" content="Catch Me If You Can">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-512.png">
+<style>
+  html { background: #000; }
+  body { margin: 0; position: fixed; inset: 0; overflow: hidden; overscroll-behavior: none; touch-action: manipulation; background: #000; }
+  body {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 18px; padding: 24px 16px; box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html { color-scheme: dark; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  #datum { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  #steuer { display: flex; gap: 10px; align-items: center; justify-content: center; }
+  #tag, #zahl {
+    font: inherit; font-size: 17px; color: #4a9eff; background: #1c1c1e;
+    border: 0; border-radius: 999px; padding: 0 20px; height: 44px; box-sizing: border-box;
+    -webkit-appearance: none; appearance: none; text-align: center; line-height: 22px;
+  }
+  #tag::-webkit-date-and-time-value { text-align: center; }
+  #zahl { width: 44px; height: 44px; padding: 0; border-radius: 50%; text-align: center; text-align-last: center; }
+  #ableitung { color: #5f5f5f; font-size: 9.5px; text-align: center; white-space: pre; line-height: 1.5; padding: 10px 0 6px; letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+  #box {
+    width: 100%; max-width: 340px; box-sizing: border-box;
+    padding: 12px 14px; border: 1px solid #262626; border-radius: 10px; background: #1c1c1e;
+    color: #fff; font-size: 6.5px; line-height: 1.45;
+    white-space: pre-wrap; word-break: break-word;
+    -webkit-user-select: text; user-select: text;
+  }
+  #kopieren {
+    border: 0; padding: 0; background: none; cursor: pointer;
+    transition: opacity .15s;
+  }
+  #kopieren img { display: block; width: 112px; height: auto; }
+  #kopieren:active { opacity: .5; }
+  #hinweis { color: #5f5f5f; font-size: 11px; height: 14px; margin-top: -10px; opacity: 0; transition: opacity .2s; }
+  #hinweis.an { opacity: 1; }
+</style>
+</head>
+<body>
+<div id="datum">
+  <div id="steuer">
+    <input id="tag" type="date" value="2026-10-02" aria-label="Datum">
+    <select id="zahl" aria-label="Zahl">
+      <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option selected>7</option>
+    </select>
+  </div>
+  <div id="ableitung"></div>
+</div>
+<div id="box">Edit this image with minimal changes. It shows three typed dates. Treat this as a precise retouch of a few digits, not a redraw of the image. Do not add any letters, words, labels, names or new text anywhere in the image; only existing digits are replaced. Everything not listed below stays exactly as it is.
+
+All three dates are stacked on top of each other: top, middle, bottom.
+
+The top date:
+"28.09.2026" → "28.09.2026"
+Nothing changes on this date. No dot at the end.
+
+The middle date:
+"29.09.2026." → "01.10.2026."
+Day 29 → 01, month 09 → 10. Keep the dot at the end.
+
+The bottom date:
+"29.09.26" → "30.09.26"
+Only the day changes (29 → 30). Keep the two-digit year, no dot at the end.
+
+Each date keeps exactly the same number of characters. Replace the digits in place: every character, including the dots, stays in exactly the same spot.
+
+Font: copy the existing digits exactly – a thin, monospaced typewriter-style font in dark gray, with even letter spacing and slightly soft edges. The digits "1" and "3" do not appear anywhere in the image yet; draw them in exactly the same style, height, stroke width and spacing, as if typed by the same machine.
+
+Keep identical: the size, shape, color, paper texture and grain of every part and the image size, aspect ratio and framing. No sharpening, cleanup, cropping, zooming, shadows, borders, letters or extra text.
+
+Final check – the result must read exactly:
+Very top right corner is always "10.01.2010"
+Top date: "28.09.2026"
+Middle date: "01.10.2026."
+Bottom date: "30.09.26"</div>
+<button id="kopieren" type="button" aria-label="Text kopieren"><img src="copy.jpg" alt="Copy"></button>
+<div id="hinweis">Kopiert</div>
+<script>
+  const box = document.getElementById('box');
+  const hinweis = document.getElementById('hinweis');
+  function zeigen() { hinweis.classList.add('an'); setTimeout(() => hinweis.classList.remove('an'), 1200); }
+  function ersatz(text) {
+    const t = document.createElement('textarea');
+    t.value = text; t.setAttribute('readonly', ''); t.style.position = 'fixed'; t.style.opacity = '0';
+    document.body.appendChild(t); t.select(); t.setSelectionRange(0, text.length);
+    let ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+    t.remove(); return ok;
+  }
+
+  /* Datum oben = Label A. B liegt (Zahl minus 1) Tage nach A. C liegt 2 Tage nach A,
+     ausser bei Zahl 2 (1 Tag) und Zahl 1 (gleicher Tag). Davids Regel, 01.10.2026.
+     Die alten Werte sind das, was im Bild steht, und bleiben fest. */
+  const ALT = { A: '29.09.2026', B: '28.09.2026.', C: '30.09.26' };
+  const z2 = (n) => String(n).padStart(2, '0');
+  function plus(d, tage) { const x = new Date(d); x.setDate(x.getDate() + tage); return x; }
+  const TAGE = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
+  function wochentag(d) { return `${TAGE[d.getDay()]} ${z2(d.getDate())}-${z2(d.getMonth() + 1)}-${d.getFullYear()}`; }
+  function lang(d) { return `${z2(d.getDate())}.${z2(d.getMonth() + 1)}.${d.getFullYear()}`; }
+  function kurz(d) { return `${z2(d.getDate())}.${z2(d.getMonth() + 1)}.${String(d.getFullYear()).slice(2)}`; }
+  function teile(s) { const [d, m, j] = s.replace(/\.$/, '').split('.'); return { day: d, month: m, year: j }; }
+  function aenderung(alt, neu) {
+    const a = teile(alt), n = teile(neu), w = [];
+    for (const k of ['day', 'month', 'year']) if (a[k] !== n[k]) w.push([k, a[k], n[k]]);
+    if (!w.length) return 'Nothing changes on this date.';
+    if (w.length === 1) return `Only the ${w[0][0]} changes (${w[0][1]} → ${w[0][2]}).`;
+    const s = w.map(([k, x, y]) => `${k} ${x} → ${y}`).join(', ');
+    return s.charAt(0).toUpperCase() + s.slice(1) + '.';
+  }
+  function liste(xs) { const q = xs.map((x) => `"${x}"`); return q.length < 2 ? q[0] : q.slice(0, -1).join(', ') + ' and ' + q[q.length - 1]; }
+  function text(a, zahl) {
+    const NEU = { A: lang(a), B: lang(plus(a, zahl - 1)) + '.', C: kurz(plus(a, Math.min(2, zahl - 1))) };
+    const alt = new Set(Object.values(ALT).join('').replace(/\D/g, ''));
+    const neuZ = [...new Set(Object.values(NEU).join('').replace(/\D/g, ''))].filter((c) => !alt.has(c)).sort();
+    const ziffern = !neuZ.length ? '' : neuZ.length === 1
+      ? ` The digit ${liste(neuZ)} does not appear anywhere in the image yet; draw it in exactly the same style, height, stroke width and spacing, as if typed by the same machine.`
+      : ` The digits ${liste(neuZ)} do not appear anywhere in the image yet; draw them in exactly the same style, height, stroke width and spacing, as if typed by the same machine.`;
+    return { NEU, anzeige: `${wochentag(a)}          -          ${wochentag(plus(a, zahl - 1))}`, t: `Edit this image with minimal changes. It shows three typed dates. Treat this as a precise retouch of a few digits, not a redraw of the image. Do not add any letters, words, labels, names or new text anywhere in the image; only existing digits are replaced. Everything not listed below stays exactly as it is.
+
+All three dates are stacked on top of each other: top, middle, bottom.
+
+The top date:
+"${ALT.A}" → "${NEU.A}"
+${aenderung(ALT.A, NEU.A)} No dot at the end.
+
+The middle date:
+"${ALT.B}" → "${NEU.B}"
+${aenderung(ALT.B, NEU.B)} Keep the dot at the end.
+
+The bottom date:
+"${ALT.C}" → "${NEU.C}"
+${aenderung(ALT.C, NEU.C)} Keep the two-digit year, no dot at the end.
+
+Each date keeps exactly the same number of characters. Replace the digits in place: every character, including the dots, stays in exactly the same spot.
+
+Font: copy the existing digits exactly – a thin, monospaced typewriter-style font in dark gray, with even letter spacing and slightly soft edges.${ziffern}
+
+Keep identical: the size, shape, color, paper texture and grain of every part and the image size, aspect ratio and framing. No sharpening, cleanup, cropping, zooming, shadows, borders, letters or extra text.
+
+Final check – the result must read exactly:
+Very top right corner is always "10.01.2010"
+Top date: "${NEU.A}"
+Middle date: "${NEU.B}"
+Bottom date: "${NEU.C}"` };
+  }
+  const tag = document.getElementById('tag');
+  const zahl = document.getElementById('zahl');
+  const ableitung = document.getElementById('ableitung');
+  /* Standard: heutiges Datum und Zahl 7. Vom Home-Bildschirm holt das iPhone die Seite oft aus dem
+     Speicher, ohne neu zu laden; deshalb wird beim Zurueckkommen an einem neuen Tag neu gesetzt. */
+  const heuteIso = () => { const h = new Date(); return `${h.getFullYear()}-${z2(h.getMonth() + 1)}-${z2(h.getDate())}`; };
+  let gesetztAm = '';
+  function standard() { gesetztAm = heuteIso(); tag.value = gesetztAm; zahl.value = '7'; }
+  standard();
+  function neuerTag() { if (heuteIso() !== gesetztAm) { standard(); neuBauen(); } }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) neuerTag(); });
+  window.addEventListener('pageshow', neuerTag);
+  window.addEventListener('focus', neuerTag);
+  function neuBauen() {
+    if (!tag.value) return;
+    const [j, m, d] = tag.value.split('-').map(Number);
+    const r = text(new Date(j, m - 1, d), Number(zahl.value));
+    box.textContent = r.t;
+    ableitung.textContent = r.anzeige;
+  }
+  tag.addEventListener('input', neuBauen);
+  tag.addEventListener('change', neuBauen);
+  zahl.addEventListener('change', neuBauen);
+  neuBauen();
+  document.getElementById('kopieren').addEventListener('click', async () => {
+    const text = box.textContent;
+    try { await navigator.clipboard.writeText(text); zeigen(); }
+    catch (e) { if (ersatz(text)) zeigen(); }
+  });
+</script>
+</body>
+</html>
